@@ -73,4 +73,12 @@ public class FileController
         }
         return result;
     }
+
+
+    //通过 httprequest获取单个文件
+    public static MultipartFile getFile(HttpServletRequest request,String name) throws Exception
+    {
+        MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+        return multipartRequest.getFile(name);
+    }
 }

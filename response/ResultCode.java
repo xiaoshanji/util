@@ -9,7 +9,7 @@ package com.shanji.response;
  */
 public enum  ResultCode
 {
-    SUCCESS(1,"成功"),
+    SUCCESS(1000,"成功"),
     PARAM_IS_INVALID(1001,"参数无效"),
     PARAM_IS_BLACK(1002,"参数为空"),
     PARAM_TYPE_BIND_ERROR(1003,"参数类型错误"),

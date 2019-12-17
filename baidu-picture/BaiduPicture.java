@@ -49,11 +49,57 @@ public class BaiduPicture
 
         System.out.println("输入爬取页数：");
         int i = KeyWord.nextInt();
+        KeyWord.nextLine();
+        System.out.println("是否下载高清");
+        boolean flag = false;
+
+        String temp = KeyWord.nextLine();
+
+        if(temp.equalsIgnoreCase("y"))
+        {
+            flag = true;
+        }
+        else
+        {
+            flag = false;
+        }
+
         List<String> list = nameList(Word);
-        getPictures(list,i,downloadPath); //1代表下载一页，一页一般有30张图片
+        getPictures(list,i,downloadPath,flag); //1代表下载一页，一页一般有30张图片
+
+        /*
+        模拟window的dos控制台
+        通过输入命令，然后调用操作的系统的系统指令
+
+        Scanner console = new Scanner(System.in);
+        final String exit = "exit";
+        System.out.print("输入dos命令：");
+        String param = console.nextLine();
+        while (!param.equalsIgnoreCase(exit))
+        {
+            try {
+                System.out.println(param);
+                Runtime rt = Runtime.getRuntime();
+                Process pr = rt.exec("cmd /c " + param);
+                //Process pr = rt.exec("D:\\xunlei\\project.aspx");
+                BufferedReader input = new BufferedReader(new InputStreamReader(pr.getInputStream(), "GBK"));
+                String line = null;
+                while ((line = input.readLine()) != null) {
+                    System.out.println(line);
+                }
+                int exitVal = pr.waitFor();
+                System.out.println("Exited with error code " + exitVal);
+
+            } catch (Exception e) {
+                System.out.println(e.toString());
+                e.printStackTrace();
+            }
+            System.out.print("输入dos命令：");
+            param = console.nextLine();
+        }*/
     }
 
-    public static void getPictures(List<String> keywordList, int max,String downloadPath) throws Exception{ // key为关键词,max作为爬取的页数
+    public static void getPictures(List<String> keywordList, int max,String downloadPath,boolean flag) throws Exception{ // key为关键词,max作为爬取的页数
         String gsm=Integer.toHexString(max)+"";
         String finalURL = "";
         String tempPath = "";
@@ -73,7 +119,15 @@ public class BaiduPicture
                 Document document = null;
                 try {
 //                    String url ="http://image.baidu.com/search/avatarjson?tn=resultjsonavatarnew&ie=utf-8&word="+keyword+"&cg=star&pn="+page*30+"&rn=30&itg=0&z=0&fr=&width=1920&height=1080&lm=-1&ic=0&s=0&st=-1&gsm="+Integer.toHexString(page*30);
-                    String url = "https://image.baidu.com/search/index?ct=201326592&z=&tn=baiduimage&ipn=r&word=" + keyword + "&pn=" + page*30 + "&istype=2&ie=utf-8&oe=utf-8&cl=2&lm=-1&st=-1&fr=&fmq=&ic=0&se=&sme=&width=1920&height=1080&face=0";
+                    String url = "";
+                    if(flag)
+                    {
+                        url = "https://image.baidu.com/search/index?ct=201326592&z=&tn=baiduimage&ipn=r&word=" + keyword + "&pn=" + page*30 + "&istype=2&ie=utf-8&oe=utf-8&cl=2&lm=-1&st=-1&fr=&fmq=&ic=0&se=&sme=&width=1920&height=1080&face=0&hd=1";
+                    }
+                    else
+                    {
+                        url = "https://image.baidu.com/search/index?ct=201326592&z=&tn=baiduimage&ipn=r&word=" + keyword + "&pn=" + page*30 + "&istype=2&ie=utf-8&oe=utf-8&cl=2&lm=-1&st=-1&fr=&fmq=&ic=0&se=&sme=&width=1920&height=1080&face=0";
+                    }
                     sop(url);
                     document = Jsoup.connect(url).data("query", "Java")//请求参数
                             .userAgent("Mozilla/4.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)")//设置urer-agent  get();
