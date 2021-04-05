@@ -1,4 +1,3 @@
-package com.shanji.email;
 
 import com.sun.mail.util.MailSSLSocketFactory;
 import javax.activation.DataHandler;
