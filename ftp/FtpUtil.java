@@ -28,10 +28,10 @@ import java.time.format.DateTimeFormatter;
 public class FtpUtil
 {
 
-    private static String IP_ADDR = "121.196.163.158";
+    private static String IP_ADDR = "";
     private static int PORT = 21;
-    private static String USERNAME = "xiaoshanshan";
-    private static String PASSWORD = "Shan19990524";
+    private static String USERNAME = "";
+    private static String PASSWORD = "";
 
     public static String upload(String file,String project) throws Exception
     {
