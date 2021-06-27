@@ -20,10 +20,10 @@ import java.util.Map;
  * @description: 阿里云短信接口：
  *      依赖：工具类中的JsonUtil以及
  *      <dependency>
- *       <groupId>com.aliyun</groupId>
- *       <artifactId>aliyun-java-sdk-core</artifactId>
- *       <version>4.5.1</version>
- *     </dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>dysmsapi20170525</artifactId>
+            <version>2.0.4</version>
+        </dependency>
  */
 public class AliSMSUtil
 {
