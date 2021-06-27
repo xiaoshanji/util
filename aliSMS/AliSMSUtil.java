@@ -1,16 +1,14 @@
 package com.shanji.aliSMS;
 
-import com.aliyuncs.CommonRequest;
-import com.aliyuncs.CommonResponse;
-import com.aliyuncs.DefaultAcsClient;
-import com.aliyuncs.IAcsClient;
-import com.aliyuncs.http.MethodType;
-import com.aliyuncs.profile.DefaultProfile;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.aliyun.dysmsapi20170525.Client;
+import com.aliyun.dysmsapi20170525.models.QuerySendDetailsRequest;
+import com.aliyun.dysmsapi20170525.models.QuerySendDetailsResponse;
+import com.aliyun.dysmsapi20170525.models.SendSmsRequest;
+import com.aliyun.dysmsapi20170525.models.SendSmsResponse;
+import com.aliyun.teaopenapi.models.Config;
 import com.shanji.json.JsonUtil;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,49 +33,34 @@ public class AliSMSUtil
      *
      * @param SignName 短信签名 id
      * @param TemplateCode 短信模板CODE
-     * @param phoneNumber 电话号码，多个用 , 分割
+     * @param phoneNumber 电话号码
      * @param TemplateParam 短信模板变量对应的实际值
-     * @param flag 当传入多个电话号码，是否需要逐个发送，true 是，false 否
      * @return 如果是逐条发送，会返回每个号码及其发送状态，如果不是逐条发送，直接将阿里云API返回的数据封装为map返回
      * @throws Exception
      * @description 使用同样的短信签名和模板给一个或多个电话发送短信
      */
-    public static List<Map<String,String>> sendSms(String SignName, String TemplateCode, String phoneNumber, Map<String,String> TemplateParam, boolean flag) throws Exception
+    public static boolean sendSms(String SignName, String TemplateCode, String phoneNumber, Map<String,String> TemplateParam) throws Exception
     {
 
-        IAcsClient client = getClient();
-        CommonRequest request = getRequest();
-        List<Map<String,String>> result = new ArrayList<>();
-
-        request.setSysAction("SendSms");
-        request.putQueryParameter("SignName", SignName);
-        request.putQueryParameter("TemplateCode", TemplateCode);
-
-        // JsonUtil.objStrToJsonStr(TemplateParam) 将 map 转为 json 字符串
-        request.putQueryParameter("TemplateParam", JsonUtil.objStrToJsonStr(TemplateParam));
+        Client client = getClient();
+        return send(client,SignName,TemplateCode,phoneNumber,TemplateParam);
+    }
 
 
-        if(flag)
+    private static boolean send(Client client,String SignName, String TemplateCode, String phoneNumber, Map<String,String> TemplateParam) throws Exception
+    {
+        SendSmsRequest sendSmsRequest = new SendSmsRequest()
+                .setPhoneNumbers(phoneNumber)
+                .setSignName(SignName)
+                .setTemplateCode(TemplateCode)
+                .setTemplateParam(JsonUtil.ToJsonStr(TemplateParam));
+        SendSmsResponse response = client.sendSms(sendSmsRequest);
+        String code = response.getBody().getCode();
+        if(code.equals("OK"))
         {
-            String[] arr = phoneNumber.split(",");
-            for(String str : arr)
-            {
-                request.putQueryParameter("PhoneNumbers", str);
-                CommonResponse response = client.getCommonResponse(request);
-
-                //将阿里云API返回的json数据转为map
-                Map<String, String> resultMap = JsonUtil.jsonStrToMap(response.getData());
-                resultMap.put("PhoneNumbers",str);
-                result.add(resultMap);
-            }
-            return result;
+            return true;
         }
-
-        request.putQueryParameter("PhoneNumbers", phoneNumber);
-        CommonResponse response = client.getCommonResponse(request);
-        result.add(JsonUtil.jsonStrToMap(response.getData()));
-
-        return result;
+        return false;
     }
 
 
@@ -93,21 +76,18 @@ public class AliSMSUtil
      * @description 短信批量发送接口，支持在一次请求中分别向多个不同的手机号码发送不同签名的短信。手机号码等参数均为JSON格式，字段个数相同，
      *      一一对应，短信服务根据字段在JSON中的顺序判断发往指定手机号码的签名。
      */
-    public static Map<String,String> sendBatchSms(String[] SignNames, String TemplateCode, String[] phoneNumbers, List<Map<String,String>> TemplateParam) throws Exception
+    public static Map<String,Boolean> sendBatchSms(String[] SignNames, String TemplateCode, String[] phoneNumbers, List<Map<String,String>> TemplateParam) throws Exception
     {
-        IAcsClient client = getClient();
-        CommonRequest request = getRequest();
+        Client client = getClient();
 
-        request.setSysAction("SendBatchSms");
+        Map<String,Boolean> result = new HashMap<>();
+        for(int i = 0,len = phoneNumbers.length ; i < len ; i++)
+        {
+            boolean send = send(client, SignNames[i], TemplateCode, phoneNumbers[i], TemplateParam.get(i));
+            result.put(phoneNumbers[i],send);
+        }
+        return result;
 
-        request.putQueryParameter("PhoneNumberJson", JsonUtil.objStrToJsonStr(phoneNumbers));
-        request.putQueryParameter("SignNameJson", JsonUtil.objStrToJsonStr(SignNames));
-        request.putQueryParameter("TemplateCode", TemplateCode);
-        request.putQueryParameter("TemplateParamJson", JsonUtil.objStrToJsonStr(TemplateParam));
-
-
-        CommonResponse response = client.getCommonResponse(request);
-        return JsonUtil.jsonStrToMap(response.getData());
     }
 
 
@@ -123,42 +103,28 @@ public class AliSMSUtil
      *
      *   如果指定日期短信发送量较大，可以分页查看。指定每页显示的短信详情数量和查看的页数，即可分页查看发送记录。
      */
-    public static JsonNode querySendDetails(String phoneNumber,String sendDate,String pageSize,String currentPage) throws Exception
+    public static Map<String,Object> querySendDetails(String phoneNumber,String sendDate,String pageSize,String currentPage) throws Exception
     {
-        IAcsClient client = getClient();
-        CommonRequest request = getRequest();
-
-        request.setSysAction("QuerySendDetails");
-
-        request.putQueryParameter("PhoneNumber", phoneNumber);
-        request.putQueryParameter("SendDate", sendDate);
-        request.putQueryParameter("PageSize", pageSize);
-        request.putQueryParameter("CurrentPage", currentPage);
-
-        CommonResponse response = client.getCommonResponse(request);
-        return JsonUtil.jsonStrToJsonNode(response.getData());
+        Client client = getClient();
+        QuerySendDetailsRequest querySendDetailsRequest = new QuerySendDetailsRequest()
+                .setPhoneNumber(phoneNumber)
+                .setSendDate(sendDate)
+                .setPageSize(Long.parseLong(pageSize))
+                .setCurrentPage(Long.parseLong(currentPage));
+        // 复制代码运行请自行打印 API 的返回值
+        QuerySendDetailsResponse response = client.querySendDetails(querySendDetailsRequest);
+        return response.getBody().getSmsSendDetailDTOs().toMap();
     }
 
-
-    private static CommonRequest getRequest()
+    private static Client getClient() throws Exception
     {
-        CommonRequest request = new CommonRequest();
-        request.setSysMethod(MethodType.POST);
-        request.setSysDomain("dysmsapi.aliyuncs.com");
-
-
-        //获取当前日期
-        LocalDate date = LocalDate.now();
-
-
-        request.setSysVersion(date.toString());
-        request.putQueryParameter("RegionId", "cn-hangzhou");
-        return request;
-    }
-
-    private static IAcsClient getClient()
-    {
-        DefaultProfile profile = DefaultProfile.getProfile("cn-hangzhou", AliSMSConfig.accessKeyId, AliSMSConfig.accessSecret);
-        return new DefaultAcsClient(profile);
+        Config config = new Config()
+                // 您的AccessKey ID
+                .setAccessKeyId(AliSMSConfig.accessKeyId)
+                // 您的AccessKey Secret
+                .setAccessKeySecret(AliSMSConfig.accessSecret);
+        // 访问的域名
+        config.endpoint = "dysmsapi.aliyuncs.com";
+        return new Client(config);
     }
 }
