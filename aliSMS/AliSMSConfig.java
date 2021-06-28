@@ -12,6 +12,6 @@ import java.io.Serializable;
 public class AliSMSConfig implements Serializable
 {
     //访问阿里云API的密钥
-    public static String accessKeyId = "";
-    public static String accessSecret = "";
+    public static String accessKeyId = "xx";
+    public static String accessSecret = "xx";
 }
