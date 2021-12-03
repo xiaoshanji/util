@@ -22,111 +22,49 @@ import java.util.Map;
  * @description: http 请求工具类，可以发送 get，post 请求，如果请求参数或者头部参数为 json 格式，需要使用 JsonUtil 进行转换
  *
  * 依赖：
- *  <dependency>
- *       <groupId>org.apache.httpcomponents</groupId>
- *       <artifactId>httpclient</artifactId>
- *       <version>4.5.2</version>
- *     </dependency>
+     	<dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.7.16</version>
+        </dependency>
  *
  */
 public class HttpUtil
 {
-    // 发送 get 请求
-    public static String sendGet(String url, Map<String, String> headers, Map<String, String> params) throws Exception
+    public static String sendGet(String url, Map<String, String> headers) throws Exception
     {
-        // 创建HttpClient对象
-        CloseableHttpClient client = HttpClients.createDefault();
-        StringBuilder reqUrl = new StringBuilder(url);
-        String result = "";
-        /*
-         * 设置param参数
-         */
-        if (params != null && params.size() > 0)
+        HttpRequest request = HttpRequest.get(url);
+        if(headers == null)
         {
-            reqUrl.append("?");
-            for (Map.Entry<String, String> param : params.entrySet())
-            {
-                reqUrl.append(param.getKey() + "=" + param.getValue() + "&");
-            }
-            url = reqUrl.subSequence(0, reqUrl.length() - 1).toString();
+            headers = new HashMap<>();
         }
-        HttpGet httpGet = new HttpGet(url);
-        /**
-         * 设置头部
-         */
-        if (headers != null && headers.size() > 0)
+        for(Map.Entry<String,String> entry : headers.entrySet())
         {
-            for (Map.Entry<String, String> header : headers.entrySet())
-            {
-                httpGet.addHeader(header.getKey(), header.getValue());
-            }
+            request.header(entry.getKey(),entry.getValue());
         }
-
-        CloseableHttpResponse response = client.execute(httpGet);
-        /**
-         * 请求成功
-         */
-        if (response.getStatusLine().getStatusCode() == 200)
-        {
-            HttpEntity entity = response.getEntity();
-            result = EntityUtils.toString(entity,"utf-8");
-        }
-        else
-        {
-            System.out.println(response.getStatusLine().getStatusCode());
-        }
-        response.close();
-        client.close();
-        return result;
+        return request.execute().body();
     }
 
-    // 发送 post 请求
-    public static String sendPost(String url, Map<String, String> headers, Map<String, String> params) throws Exception
+    public static String sendPost(String url, Map<String, String> headers,Map<String,String> params) throws Exception
     {
-        CloseableHttpClient client = HttpClients.createDefault();
-        String result = "";
-        HttpPost httpPost = new HttpPost(url);
-
-        /**
-         * 设置头部
-         */
-        if (headers != null && headers.size() > 0)
+        HttpRequest request = HttpRequest.post(url);
+        if(headers == null)
         {
-            for (Map.Entry<String, String> header : headers.entrySet())
-            {
-                httpPost.addHeader(header.getKey(), header.getValue());
-            }
+            headers = new HashMap<>();
+        }
+        if(params == null)
+        {
+            params = new HashMap<>();
+        }
+        for(Map.Entry<String,String> entry : headers.entrySet())
+        {
+            request.header(entry.getKey(),entry.getValue());
         }
 
-        /**
-         * 设置参数
-         */
-        List<NameValuePair> paramList = new ArrayList<>();
-        if (params != null && params.size() > 0)
+        for(Map.Entry<String,String> entry : params.entrySet())
         {
-            for (Map.Entry<String, String> param : params.entrySet())
-            {
-                paramList.add(new BasicNameValuePair(param.getKey(), param.getValue()));
-            }
-
+            request.body(entry.getKey(),entry.getValue());
         }
-
-        // 模拟表单提交
-        UrlEncodedFormEntity entity = new UrlEncodedFormEntity(paramList, "utf-8");
-        httpPost.setEntity(entity);
-
-        CloseableHttpResponse response = client.execute(httpPost);
-        if (response.getStatusLine().getStatusCode() == 200)
-        {
-            HttpEntity hentity = response.getEntity();
-            result = EntityUtils.toString(hentity, "utf-8");
-        }
-        else
-        {
-            System.out.println(response.getStatusLine().getStatusCode());
-        }
-        response.close();
-        client.close();
-        return result;
+        return request.execute().body();
     }
 }
